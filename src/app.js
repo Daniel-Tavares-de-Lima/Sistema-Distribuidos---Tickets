@@ -5,7 +5,7 @@ require("dotenv").config();
 const app = express();
 // Importa as rotas
 const userRoutes = require('./app/routes/userRoutes'); 
-// const formRoutes = require("./app/routes/formRoutes")
+const formRoutes = require("./app/routes/FormRoutes")
 // const ticketRoutes = require('./app/routes/ticketRoutes');
 const authRoutes = require('./app/routes/authRoutes');
 // const formResponseRoutes = require('./app/routes/formResponseRoutes');
@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
 
 //--- Outras rotas -- EM ANDAMENTO
 app.use('/api', userRoutes);
-// app.use('/api', formRoutes);
+app.use('/api', formRoutes);
 app.use('/api', authRoutes);
 // app.use('/api', userRoutes);
 // app.use('/api', ticketRoutes);
