@@ -1,4 +1,4 @@
-const { password } = require("../../config/database");
+const { password } = require("../../config/config");
 
 module.exports = {
   async up(queryInterface, Sequelize) {

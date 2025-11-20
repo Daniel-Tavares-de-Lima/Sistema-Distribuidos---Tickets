@@ -7,7 +7,7 @@ const app = express();
 const userRoutes = require('./app/routes/userRoutes'); 
 // const formRoutes = require("./app/routes/formRoutes")
 // const ticketRoutes = require('./app/routes/ticketRoutes');
-// const authRoutes = require('./app/routes/authRoutes');
+const authRoutes = require('./app/routes/authRoutes');
 // const formResponseRoutes = require('./app/routes/formResponseRoutes');
 // const { success } = require("./utils/responseFormatter");
 
@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 //--- Outras rotas -- EM ANDAMENTO
 app.use('/api', userRoutes);
 // app.use('/api', formRoutes);
-// app.use('/api', authRoutes);
+app.use('/api', authRoutes);
 // app.use('/api', userRoutes);
 // app.use('/api', ticketRoutes);
 // app.use('/api', formResponseRoutes);

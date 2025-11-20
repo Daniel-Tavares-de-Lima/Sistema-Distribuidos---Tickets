@@ -43,7 +43,7 @@ services:
       - "3000:3000"
     volumes:
       - .:/usr/src/app
-      - /usr/src/app/node_modules
+      # - /usr/src/app/node_modules
     networks:
       - ticket_network
     command: npm run dev
