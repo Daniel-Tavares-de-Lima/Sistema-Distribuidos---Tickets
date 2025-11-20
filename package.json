@@ -1,19 +1,16 @@
 {
-  "name": "sistema-distribuido-projeto",
+  "name": "API_Tela_De_Chamados_Quoti",
   "version": "1.0.0",
   "main": "index.js",
+  "license": "MIT",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "app": "nodemon src/server.js",
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "migrate": "sequelize-cli db:migrate",
-    "migrate:undo": "sequelize-cli db:migrate:undo",
-    "seed": "sequelize-cli db:seed:all"
+    "dev": "npx nodemon -r sucrase/register src/server.js",
+    "migrate": "sequelize db:migrate",
+    "migrate:undo": "sequelize db:migrate:undo",
+    "seed": "sequelize db:seed:all"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -25,6 +22,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.11",
-    "sequelize-cli": "^6.6.3"
+    "sequelize-cli": "^6.6.3",
+    "sucrase": "^3.35.1"
   }
 }

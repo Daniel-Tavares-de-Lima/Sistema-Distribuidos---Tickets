@@ -1,21 +1,20 @@
-# Dockerfile
-# Usa a imagem oficial do Node.js 18 (LTS)
+# Usa Node.js 18 LTS
 FROM node:18-alpine
 
-# Define o diretório de trabalho dentro do container
+# Define diretório de trabalho
 WORKDIR /usr/src/app
 
-# Copia os arquivos de dependências
+# Copia arquivos de dependências
 COPY package*.json ./
 
-# Instala as dependências do projeto
-RUN npm install
+# Garante que todas as dependências (dev e prod) sejam instaladas
+RUN npm install --legacy-peer-deps
 
 # Copia todo o código da aplicação
 COPY . .
 
-# Expõe a porta que a aplicação vai rodar
+# Expõe porta da API
 EXPOSE 3000
 
-# Comando para iniciar a aplicação
-CMD ["npm", "run", "dev"]
+# Comando para rodar a aplicação em dev com sucrase
+CMD ["npx", "nodemon", "-r", "sucrase/register", "src/server.js"]
