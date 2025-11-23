@@ -5,11 +5,11 @@ require("dotenv").config();
 const app = express();
 // Importa as rotas
 const userRoutes = require('./app/routes/userRoutes'); 
-const formRoutes = require("./app/routes/FormRoutes")
-// const ticketRoutes = require('./app/routes/ticketRoutes');
+const formRoutes = require("./app/routes/formRoutes")
+const ticketRoutes = require('./app/routes/ticketRoutes');
 const authRoutes = require('./app/routes/authRoutes');
 const formResponseRoutes = require('./app/routes/formResponseRoutes');
-// const { success } = require("./utils/responseFormatter");
+const { success } = require("./utils/responseFormatter");
 
 app.use(cors()); //--Requisições de outros grupos
 app.use(express.json()); //--Para interpretar JSON
@@ -30,7 +30,7 @@ app.use('/api', userRoutes);
 app.use('/api', formRoutes);
 app.use('/api', authRoutes);
 // app.use('/api', userRoutes);
-// app.use('/api', ticketRoutes);
+app.use('/api', ticketRoutes);
 app.use('/api', formResponseRoutes);
 // app.use("/users", userRouter);
 // app.user("/tickets", ticketsRouter)

@@ -70,10 +70,10 @@ class FormResponse extends Model {
     });
 
     // FormResponse pode ter um Ticket vinculado
-    // this.hasOne(models.Ticket, {
-    //   foreignKey: 'response_id',
-    //   as: 'ticket',
-    // });
+    this.hasOne(models.Ticket, {
+      foreignKey: 'response_id',
+      as: 'ticket',
+    });
   }
 }
 

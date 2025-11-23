@@ -6,7 +6,7 @@ const config = dbConfig[env];
 const User = require("./User");
 const Form = require("./Form");
 const FormResponse = require("./FormResponse");
-// const Ticket = require("./Ticket");
+const Ticket = require("./Ticket");
 
 // const env = "desenvolvendo";
 // const config = dbConfig[env];
@@ -22,9 +22,9 @@ const sequelize = new Sequelize(
 User.init(sequelize);
 Form.init(sequelize);
 FormResponse.init(sequelize);
-// Ticket.init(sequelize);
+Ticket.init(sequelize);
 
-const models = { User, Form, FormResponse };
+const models = { User, Form, FormResponse, Ticket };
 
 //-- Associa todos os Models
 console.log("Models carregados:", models);

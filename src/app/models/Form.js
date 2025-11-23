@@ -48,7 +48,7 @@ class Form extends Model {
 
     static associate(models) {
         this.hasMany(models.FormResponse, { foreignKey: 'form_id', as: 'questions' });
-        // this.hasMany(models.Ticket, {foreignKey: 'form_id',as: 'tickets'});
+        this.hasMany(models.Ticket, {foreignKey: 'form_id',as: 'tickets'});
     }
 }
 
