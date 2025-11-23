@@ -8,11 +8,11 @@ module.exports = {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,
     dialect: 'mysql',
-    logging: false, // Desativa logs SQL no console (deixe true para debug)
-    timezone: '-03:00', // Fuso horário de Brasília
+    logging: false, 
+    timezone: '-03:00', 
     define: {
-      timestamps: true, // Adiciona createdAt e updatedAt automaticamente
-      underscored: true, // Usa snake_case nos nomes das colunas (created_at)
+      timestamps: true, 
+      underscored: true, 
       underscoredAll: true,
     },
   },

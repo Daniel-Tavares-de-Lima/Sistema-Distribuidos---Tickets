@@ -62,7 +62,7 @@ class User extends Model{
         // this.hasMany(models.Ticket, {foreignKey: "user_id", as: "tickets"});
         // this.hasMany(models.Ticket, {foreignKey: 'creator_id',as: 'createdTickets'});
         // this.hasMany(models.Ticket, {foreignKey: 'responsible_id',as: 'assignedTickets',});
-        // this.hasMany(models.FormResponse, {foreignKey: "creator_id", as:"formResponse"})
+        this.hasMany(models.FormResponse, {foreignKey: "creator_id", as:"formResponse"})
     }
     //--Comparar a senha hash com a senha em texto
     checkPassword(password){
