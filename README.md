@@ -29,7 +29,7 @@ Ele inclui **API REST**, **processamento assíncrono via Kafka**, **interface we
 - KafkaJS (no Node.js)
 
 ### **Frontend**
-- Em desenvolvimento (React ou Next.js recomendado)
+- Em desenvolvimento 
 
 ---
 
