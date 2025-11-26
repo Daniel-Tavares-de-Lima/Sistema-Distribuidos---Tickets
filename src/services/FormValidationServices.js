@@ -1,6 +1,6 @@
 
 ///---Utilss------
-class FormValidationService {
+class FormValidationServices {
 
     
   validateResponse(form, responseContent) {
@@ -73,4 +73,4 @@ class FormValidationService {
   }
 }
 
-module.exports = new FormValidationService();
+module.exports = FormValidationServices;

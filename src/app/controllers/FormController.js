@@ -1,109 +1,106 @@
-const { Form } = require('../models');
+const FormService = require("../../services/FormServices");
+const formService = new FormService();
 
 class FormController {
 
-    // CREATE - Cria um novo formulário
+    // CREATE - Criar um novo formulario
     async create(req, res) {
         try {
-            const { assunto, benefiario, description, is_active } = req.body;
 
-            if (!assunto) {
-                return res.status(400).json({ error: "O campo 'assunto' é obrigatório." });
+            const result = await formService.createForm(req.body);
+
+            //--Se a criação falhou retorna um erro
+            if (!result.success) {
+                return res.status(400).json({ error: result.errors[0] });
             }
 
-            const form = await Form.create({ assunto, benefiario, description, is_active });
+            //--Formulario criado
+            return res.status(201).json(result.form);
 
-            return res.status(201).json(form);
-        } catch (error) {
+        } catch (error) { //---ERROR
             console.error("Erro ao criar form:", error);
             return res.status(500).json({ error: "Erro ao criar form." });
         }
     }
-    //---Lógica services, Filtros Name - parte do usuario
-    // READ - Listar todos os forms
+
+    // READ LIST
     async read(req, res) {
         try {
+            //---Pega os parametros de paginação da URL
             const { page = 1, limit = 10 } = req.query;
-            const offset = (page - 1) * limit;
 
-            const { count, rows: forms } = await Form.findAndCountAll({
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                order: [["created_at", "DESC"]]
-            });
+            //--Listar os formularios com paginação
+            const result = await formService.listForms(page, limit);
 
+            //--Retorna lista paginada, total de paginas, paginas atual e forms
             return res.json({
-                total: count,
-                totalPages: Math.ceil(count / limit),
+                total: result.total,
+                totalPages: Math.ceil(result.total / limit),
                 currentPage: parseInt(page),
-                forms
+                forms: result.forms
             });
+
         } catch (error) {
             console.error("Erro ao listar forms:", error);
             return res.status(500).json({ error: "Erro ao listar forms." });
         }
     }
 
-    // READ BY ID - Buscar form por ID
+    // READ BY ID 
     async readId(req, res) {
         try {
-            const { id } = req.params;
+            //--Buscar um formulario pelo ID
+            const result = await formService.getFormById(req.params.id);
 
-            const form = await Form.findOne({ where: { id_form: id } });
-
-            if (!form) {
-                return res.status(404).json({ error: "Formulário não encontrado." });
+            //--Se não encontrar retorna um erro
+            if (!result.success) {
+                return res.status(404).json({ error: result.errors[0] });
             }
 
-            return res.json(form);
+            //---retorna formulario
+            return res.json(result.form);
+
         } catch (error) {
             console.error("Erro ao buscar form:", error);
             return res.status(500).json({ error: "Erro ao buscar form." });
         }
     }
 
-    // UPDATE - Atualizar form
+    // UPDATE
     async update(req, res) {
         try {
-            const { id } = req.params;
-            const { assunto, benefiario, description, is_active } = req.body;
 
-            const form = await Form.findOne({ where: { id_form: id } });
+            //--Chama o service para atualizar o formulario passando o id e as novas atualizações
+            const result = await formService.updateForm(req.params.id, req.body);
 
-            if (!form) {
-                return res.status(404).json({ error: "Formulário não encontrado." });
+            //--Se não encontrar o formulario retorna erro
+            if (!result.success) {
+                return res.status(404).json({ error: result.errors[0] });
             }
 
-            await form.update({
-                ...(assunto && { assunto }),
-                ...(benefiario && {benefiario}),
-                ...(description && { description }),
-                ...(is_active !== undefined && { is_active })
-            });
+            //--Retorna o formulario atualizado
+            return res.json({ message: "Form atualizado com sucesso!", form: result.form });
 
-            await form.reload();
-
-            return res.json({ message: "Form atualizado com sucesso!", form });
         } catch (error) {
             console.error("Erro ao atualizar form:", error);
             return res.status(500).json({ error: "Erro ao atualizar form." });
         }
     }
 
-    // DELETE - Remover form (soft delete)
+    // DELETE
     async delete(req, res) {
         try {
-            const { id } = req.params;
+            //---Chama o service para deletar o formulario passando o id
+            const result = await formService.deleteForm(req.params.id);
 
-            const form = await Form.findOne({ where: { id_form: id } });
-
-            if (!form) {
-                return res.status(404).json({ error: "Formulário não encontrado." });
+            //---Se não encontrar retorna erro
+            if (!result.success) {
+                return res.status(404).json({ error: result.errors[0] });
             }
 
-            await form.destroy(); // Soft delete (paranoid)
-
+            //--Formulario deleteado
             return res.status(204).send();
+
         } catch (error) {
             console.error("Erro ao deletar form:", error);
             return res.status(500).json({ error: "Erro ao deletar form." });
@@ -111,4 +108,4 @@ class FormController {
     }
 }
 
-module.exports = new FormController();
+module.exports = FormController;

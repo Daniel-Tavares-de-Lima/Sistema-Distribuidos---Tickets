@@ -1,290 +1,85 @@
-const { FormResponse, Form, User } = require('../models');
-const FormValidationService = require('../../services/FormValidationServices');
+const FormResponseService = require("../../services/FormResponseServices");
+const { paginated, error, success } = require("../../utils/responseFormatter");
+
+const formResponseService = new FormResponseService();
 
 class FormResponseController {
-  // CREATE - Criar uma resposta de formulário
+  // CREATE
   async create(req, res) {
-    try {
-      const { form_id, content } = req.body;
-      console.log('Usuário logado:', req.user);
-      const creator_id = req.user.id;
+    //---Chama o servicer para criar o forms passando o usuario que está logado e o corpo
+    const result = await formResponseService.createResponse(req.user, req.body);
 
-      // Validação 
-      if (!form_id || !content) {
-        return res.status(400).json({
-          error: "Os campos 'form_id' e 'content' são obrigatórios.",
-        });
-      }
-
-      // Verifica se o formulário existe
-      const form = await Form.findOne({
-        where: { id_form: form_id },
-      });
-
-      if (!form) {
-        return res.status(404).json({
-          error: 'Formulário não encontrado.',
-        });
-      }
-
-      // Verifica se o formulário está ativo
-      if (!form.is_active) {
-        return res.status(400).json({
-          error: 'Este formulário está inativo e não pode ser respondido.',
-        });
-      }
-
-      // Valida se o content está no formato correto
-      const validation = FormValidationService.validateResponse(form, content);
-      if (!validation.valid) {
-        return res.status(400).json({
-          error: 'Resposta inválida',
-          details: validation.errors,
-        });
-      }
-
-      // Cria a resposta
-      const formResponse = await FormResponse.create({
-        form_id,
-        creator_id,
-        content,
-      });
-
-      // Recarrega com os relacionamentos
-      await formResponse.reload({
-        include: [
-          {
-            association: 'creator',
-            attributes: ['id_user', 'email', 'role'],
-          },
-          {
-            association: 'form',
-            attributes: ['id_form', 'assunto', 'benefiario', 'description'],
-          },
-        ],
-      });
-
-      return res.status(201).json(formResponse);
-    } catch (error) {
-      console.error('Erro ao criar resposta:', error);
-      return res.status(500).json({
-        error: 'Erro ao criar resposta.',
-        details: error.message,
-      });
+    //--Se tiver alguma falha retorna erro
+    if (!result.success) {
+      return res.status(400).json(error("Erro ao criar resposta", result.errors));
     }
+
+    //--Retorna o formulario criado
+    return res.status(201).json(success(result.response));
   }
 
-  // READ - Listar respostas
+  // GET
   async read(req, res) {
-    try {
-      const { page = 1, limit = 10, form_id } = req.query;
-      const offset = (page - 1) * limit;
+    //---Pega os parametros da query para fazer a paginação e o filtro
+    const { page = 1, limit = 10, form_id } = req.query;
 
-      // Monta o filtro
-      const where = {};
+    //--Objeto de filtros a ser passado
+    const filters = { form_id };
 
-      // Se usuário é externo, só vê suas próprias respostas
-      if (req.user.role === 'externo') {
-        where.creator_id = req.user.id;
-      }
+    //-Chama o service para mostrar as reposta com base nos paremetros
+    const result = await formResponseService.listResponses(req.user, page, limit, filters);
 
-      // Filtro opcional por formulário
-      if (form_id) {
-        where.form_id = form_id;
-      }
 
-      const { count, rows: responses } = await FormResponse.findAndCountAll({
-        where,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['created_at', 'DESC']],
-        include: [
-          {
-            association: 'creator',
-            attributes: ['id_user', 'email', 'role'],
-          },
-          {
-            association: 'form',
-            attributes: ['id_form', 'assunto', 'benefiario'],
-          },
-        ],
-      });
-
-      return res.json({
-        total: count,
-        totalPages: Math.ceil(count / limit),
-        currentPage: parseInt(page),
-        responses,
-      });
-    } catch (error) {
-      console.error('Erro ao listar respostas:', error);
-      return res.status(500).json({
-        error: 'Erro ao listar respostas.',
-        details: error.message,
-      });
-    }
+    return res.json(
+      paginated(result.responses, result.total, page, limit)
+    );
   }
 
-  // READ BY ID - Buscar uma resposta específica
+  // GET BY ID
   async readId(req, res) {
-    try {
-      const { id } = req.params;
+    //--Pega o ID
+    const { id } = req.params;
 
-      const formResponse = await FormResponse.findByPk(id, {
-        include: [
-          {
-            association: 'creator',
-            attributes: ['id_user', 'email', 'cpf', 'role'],
-          },
-          {
-            association: 'form',
-            attributes: ['id_form', 'assunto', 'benefiario', 'description'],
-          },
-        ],
-      });
+    //---Chama o service para buscar a resposta pelo usuario logado e ID
+    const result = await formResponseService.getResponseById(id, req.user);
 
-      if (!formResponse) {
-        return res.status(404).json({
-          error: 'Resposta não encontrada.',
-        });
-      }
-
-      // Se usuário é externo, só pode ver suas próprias respostas
-      if (
-        req.user.role === 'externo' &&
-        formResponse.creator_id !== req.user.id
-      ) {
-        return res.status(403).json({
-          error: 'Acesso negado.',
-          message: 'Você só pode visualizar suas próprias respostas.',
-        });
-      }
-
-      return res.json(formResponse);
-    } catch (error) {
-      console.error('Erro ao buscar resposta:', error);
-      return res.status(500).json({
-        error: 'Erro ao buscar resposta.',
-        details: error.message,
-      });
+    //--Se nao encintrar retorna erro
+    if (!result.success) {
+      return res.status(404).json(error(result.errors[0]));
     }
+
+    //--Retorna a resposta
+    return res.json(success(result.response));
   }
 
-  // UPDATE - Atualizar uma resposta
+  // UPDATE
   async update(req, res) {
-    try {
-      const { id } = req.params;
-      const { content } = req.body;
+    //--Pega o id
+    const { id } = req.params;
 
-      const formResponse = await FormResponse.findByPk(id, {
-        include: ['form'],
-      });
+    ///--Chama o service para atualizar
+    const result = await formResponseService.updateResponse(id, req.user, req.body);
 
-      if (!formResponse) {
-        return res.status(404).json({
-          error: 'Resposta não encontrada.',
-        });
-      }
-
-      // Apenas o criador ou INTERNO pode atualizar
-      if (
-        req.user.role === 'externo' &&
-        formResponse.creator_id !== req.user.id
-      ) {
-        return res.status(403).json({
-          error: 'Acesso negado.',
-          message: 'Você só pode editar suas próprias respostas.',
-        });
-      }
-
-      // Se content foi enviado, valida
-      if (content) {
-        const validation = FormValidationService.validateResponse(
-          formResponse.form,
-          content
-        );
-        if (!validation.valid) {
-          return res.status(400).json({
-            error: 'Resposta inválida',
-            details: validation.errors,
-          });
-        }
-
-        await formResponse.update({ content });
-      }
-
-      // Recarrega com os relacionamentos
-      await formResponse.reload({
-        include: [
-          {
-            association: 'creator',
-            attributes: ['id_user', 'email', 'role'],
-          },
-          {
-            association: 'form',
-            attributes: ['id_form', 'assunto', 'benefiario'],
-          },
-        ],
-      });
-
-      return res.json({
-        message: 'Resposta atualizada com sucesso!',
-        response: formResponse,
-      });
-    } catch (error) {
-      console.error('Erro ao atualizar resposta:', error);
-      return res.status(500).json({
-        error: 'Erro ao atualizar resposta.',
-        details: error.message,
-      });
+    
+    if (!result.success) {
+      return res.status(400).json(error(result.errors[0]));
     }
+
+    return res.json(success(result.response, "Resposta atualizada com sucesso"));
   }
 
-  // DELETE - Remover uma resposta
+  // DELETE
   async delete(req, res) {
-    try {
-      const { id } = req.params;
+    const { id } = req.params;
 
-      const formResponse = await FormResponse.findByPk(id);
+    const result = await formResponseService.deleteResponse(id, req.user);
 
-      if (!formResponse) {
-        return res.status(404).json({
-          error: 'Resposta não encontrada.',
-        });
-      }
-
-      // Apenas o criador ou INTERNO pode deletar
-      if (
-        req.user.role === 'externo' &&
-        formResponse.creator_id !== req.user.id
-      ) {
-        return res.status(403).json({
-          error: 'Acesso negado.',
-          message: 'Você só pode deletar suas próprias respostas.',
-        });
-      }
-
-      // Verifica se existe ticket vinculado
-      const ticket = await formResponse.getTicket();
-      if (ticket) {
-        return res.status(400).json({
-          error:
-            'Não é possível deletar uma resposta vinculada a um ticket.',
-          ticket_id: ticket.id_ticket,
-        });
-      }
-
-      await formResponse.destroy();
-
-      return res.status(204).send();
-    } catch (error) {
-      console.error('Erro ao deletar resposta:', error);
-      return res.status(500).json({
-        error: 'Erro ao deletar resposta.',
-        details: error.message,
-      });
+    if (!result.success) {
+      return res.status(400).json(error(result.errors[0]));
     }
+
+    return res.status(204).send();
   }
 }
 
-module.exports = new FormResponseController();
+module.exports = FormResponseController;
