@@ -98,4 +98,4 @@ class AuthController{
 
 ///------MVC -- MODELS, VIEW, CONSTROLLER
 
-module.exports = new AuthController();
+module.exports = AuthController;

@@ -31,20 +31,18 @@ const error = (message, details = []) =>{
     return response;
 }
 
-
-
 //--Formata resposta paginada
 const paginated = (items, total, page, limit) =>{
     return{
         success: true,
         data: items,
         pagination:{
-            total,
-            // totalPages: Math.ceil(total / limit),
-            // currentPage: parseInt(page),
-            // perPage: parseInt(limit),
-            hasNext: page * limit < total,
-            hasPrevious: page > 1
+            total, //---Total de registros
+            totalPages: Math.ceil(total / limit), //--Total dividido pelo limit
+            currentPage: parseInt(page), //----pagina atual
+            perPage: parseInt(limit), //---quantos resultados por página
+            hasNext: page * limit < total, //---se há próxima página
+            hasPrevious: page > 1 //---Se há página anterior
         }
     }
 }

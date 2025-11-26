@@ -10,7 +10,7 @@ const ticketServices = new TicketServices();
 class TicketController {
   // CREATE - Criar um novo ticket
   async create(req, res) {
-    const transaction = await sequelize.transaction();
+    // const transaction = await sequelize.transaction();
     
     try {
       // const { form_id, response_id, priority, notes } = req.body;
@@ -19,15 +19,15 @@ class TicketController {
       const result = await ticketServices.createTicket(req.body, creator_id);
 
       if(!result.success){
-        await transaction.rollback();
+       
         return res.status(400).json(error("Erro ao criar ticket", result.errors))
       }
 
-      await transaction.commit()
+      
       return res.status(200).json(success(result.ticket, "Ticket criado com sucesso"));
 
     } catch (error) {
-      await transaction.rollback();
+      
       console.error('Erro ao criar ticket:', error);
       return res.status(500).json({
         error: 'Erro ao criar ticket.'
@@ -38,14 +38,17 @@ class TicketController {
   // READ - Listar tickets
   async read(req, res) {
     try {
-      //----Criar um middlewares------------
-      const {page = 1, limit = 10, status, priority, form_id, responsible_id} = req.query;
 
+      const {page, limit} = req.pagination;
+      //----Parametros que vem da URL
+      const {status, priority, form_id, responsible_id} = req.query;
+
+      //---Agrupa os filtros
       const filters = {status, priority, form_id, responsible_id};
 
       const result = await ticketServices.listTickets(req.user,page, limit,filters)
 
-      return res.json(paginated(result.tickets), result.total, page, limit);
+      return res.json(paginated(result.tickets, result.total, page,limit));
 
     } catch (err) {
       console.error('Erro ao listar tickets:', err);
@@ -75,13 +78,12 @@ class TicketController {
 
   // UPDATE - Atualizar ticket
   async update(req, res) {
-    const transaction = await sequelize.transaction();
-
+   
     try {
       const { id } = req.params;
 
       if(req.user.role === "externo"){
-        await transaction.rollback();
+   
         return res.status(400).json(
           error("Apenas usuários INTERNOS podem atualizar os tickets")
         )
@@ -91,18 +93,18 @@ class TicketController {
 
       //---Verifica se encontrou o corpo da requisição, caso não
       if(!result.success){
-        await transaction.rollback();
+   
         return res.status(400).json(
           error("Erro ao atualizar o ticket", result.errors)
         );
       }
 
-      await transaction.commit();
+    
 
       return res.json(success(result.ticket, "Ticket atualizado com sucesso"));
       
     } catch (erro) {
-      await transaction.rollback();
+    
       console.error('Erro ao atualizar ticket:', erro);
       return res.status(500).json({
         error: 'Erro ao atualizar ticket.',
@@ -138,32 +140,22 @@ class TicketController {
   // AÇÃO: Pegar ticket para mim
   async assignToMe(req, res) {
     //----Verificar 
-    const transaction = await sequelize.transaction();
+    
 
     try {
       const { id } = req.params;
 
-      // Apenas INTERNO pode pegar tickets
-      // if (req.user.role !== 'interno') {
-      //   await transaction.rollback();
-      //   return res.status(403).json(
-      //     error('Apenas usuários INTERNOS podem assumir tickets')
-      //   );
-      // }
-
       const result = await ticketServices.assignTicket(id, req.user.id);
 
       if (!result.success) {
-        await transaction.rollback();
         return res.status(400).json(error(result.errors[0]));
       }
 
       //-----Passar pro services
-      await transaction.commit();
+     
 
       return res.json(success(result.ticket, 'Ticket atribuído com sucesso'));
     } catch (err) {
-      await transaction.rollback();
       console.error('Erro ao atribuir ticket:', err);
       return res.status(500).json(error('Erro interno ao atribuir ticket'));
     }
@@ -171,64 +163,24 @@ class TicketController {
 
   // Devolver ticket para a fila
   async returnToQueue(req, res) {
-    const transaction = await sequelize.transaction();
 
     try {
       const { id } = req.params;
 
-      // Apenas INTERNO pode devolver
-      // if (req.user.role !== 'interno') {
-      //   await transaction.rollback();
-      //   return res.status(403).json(
-      //     error('Apenas usuários INTERNOS podem devolver tickets')
-      //   );
-      // }
-
       const result = await ticketServices.returnToQueue(id);
 
       if (!result.success) {
-        await transaction.rollback();
         return res.status(400).json(error(result.errors[0]));
       }
 
-      await transaction.commit();
-
       return res.json(success(result.ticket, 'Ticket devolvido para a fila com sucesso'));
     } catch (err) {
-      await transaction.rollback();
       console.error('Erro ao devolver ticket:', err);
       return res.status(500).json(error('Erro interno ao devolver ticket'));
     }
   }
 
 
-  
-  // async close(req, res) {
-  //   const transaction = await sequelize.transaction();
-
-  //   try {
-  //     const { id } = req.params;
-
-  //     // Apenas INTERNO pode fechar
-  //     if (req.user.role !== 'interno') {
-  //       await transaction.rollback();
-  //       return res.status(403).json(
-  //         error('Apenas usuários INTERNOS podem fechar tickets')
-  //       );
-  //     }
-
-  //     const result = await TicketService.closeTicket(id);
-
-  //     if (!result.success) {
-  //       await transaction.rollback();
-  //       return res.status(400).json(error(result.errors[0]));
-  //     }
-
-  //     await transaction.commit();
-
-  //     return res.json(success(result.ticket, 'Ticket fechado com sucesso'));
-    
-  // }
 }
 
-module.exports = new TicketController();
+module.exports =  TicketController;
