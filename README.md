@@ -1,3 +1,36 @@
-# Sistema-Distribuidos---Tickets
+#  HelpDesk Distributed System  
+### Sistema de Chamados Distribuído com Node.js, MySQL, Docker e Kafka
 
-O projeto consiste no desenvolvimento de um Sistema Distribuído de Gerenciamento de Chamados (Helpdesk) para uso interno de uma empresa. O objetivo é permitir que alunos, professores e funcionários abram, acompanhem e atualizem chamados relacionados a suporte técnico, manutenção, solicitações administrativas e problemas gerais.
+Este projeto é um **Sistema de HelpDesk distribuído**, desenvolvido com foco em escalabilidade, modularização e boas práticas de arquitetura.  
+Ele inclui **API REST**, **processamento assíncrono via Kafka**, **interface web**, além de rodar totalmente em containers Docker.
+
+---
+
+##  Tecnologias Utilizadas
+
+### **Backend**
+- Node.js  
+- Express.js  
+- Sequelize ORM  
+- JWT (autenticação)  
+- Bcrypt  
+- Express Validator  
+
+### **Banco de Dados**
+- MySQL  
+- Sequelize Migrations & Seeders  
+
+### **Infraestrutura**
+- Docker  
+- Docker Compose  
+
+### **Middleware de Mensageria**
+- Apache Kafka  
+- KafkaJS (no Node.js)
+
+### **Frontend**
+- Em desenvolvimento 
+
+---
+
+
