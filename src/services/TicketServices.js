@@ -1,6 +1,7 @@
+const e = require("express");
 const {Ticket, Form, FormResponse, User} = require("../app/models");
 const { success, error } = require("../utils/responseFormatter");
-
+const eventPublisher = require("../utils/eventPublisher");
 
 class TicketServices{
     //---Valida transição de status
@@ -238,6 +239,14 @@ class TicketServices{
             include: this.getDefaultIncludes()
         });
 
+        try{
+            const creator = await User.findByPk(creatorId);
+            const form = formValidation.form;
+            await eventPublisher.publishTicketCreated(ticket, creator, form);
+        }catch(err){
+            console.error(" Erro ao publicar evento de ticket criado:", err.message);
+        }
+
         return{
             success: true,
             ticket
@@ -319,13 +328,24 @@ class TicketServices{
 
         const{status, priority, responsible_id, notes} = data;
 
+    
         //----Verifica  a mudança de status
+        // Capturar mudanças
+        const changes = {};
         if(status && status !== ticket.status){
-            const newResponsible = responsible_id !== undefined ? responsible_id : ticket.response_id;
+            changes.status = { old: ticket.status, new: status };
+        }
+        if(priority && priority !== ticket.priority){
+            changes.priority = { old: ticket.priority, new: priority };
+        }
+        if(responsible_id !== undefined && responsible_id !== ticket.responsible_id){
+            changes.responsible_id = { old: ticket.responsible_id, new: responsible_id };
+        }
 
+        if(status && status !== ticket.status){
+            const newResponsible = responsible_id !== undefined ? responsible_id : ticket.responsible_id;
             const statusValidation = this.validateStatusTransition(ticket.status, status, newResponsible)
 
-            //---Verifica se o status é valido, caso não
             if(!statusValidation.valid){
                 return{success: false, errors: statusValidation.errors, allowTransitions: statusValidation.allowTransitions}
             }
@@ -336,8 +356,8 @@ class TicketServices{
             await ticket.update({
                 responsible_id: null,
                 status: "ABERTO",
-                ...Form(priority && {priority}),
-                ...Form(notes !== undefined && {notes})
+                ...(priority && {priority}),
+                ...(notes !== undefined && {notes})
             });
         }else{
             ///--Atualiza normal
@@ -351,6 +371,24 @@ class TicketServices{
 
         //--Recarrega com os relacionamentos com as outras tabelas
         await ticket.reload({include: this.getDefaultIncludes()});
+
+
+        // PUBLICAR EVENTOS
+        try {
+            if(Object.keys(changes).length > 0){
+                await eventPublisher.publishTicketUpdated(ticket, changes);
+            }
+
+            // Evento específico de fechamento
+            if(changes.status && status === 'FECHADO'){
+                const resolutionTime = Math.floor(
+                    (new Date() - new Date(ticket.created_at)) / 1000 / 60
+                );
+                await eventPublisher.publishTicketClosed(ticket, resolutionTime);
+            }
+        } catch (error) {
+            console.error('Erro ao publicar eventos de atualização:', error);
+        }
 
         return{
             success: true, ticket
@@ -423,6 +461,15 @@ class TicketServices{
             include: this.getDefaultIncludes(),
         });
 
+
+        // PUBLICAR EVENTO
+        try {
+            const responsible = await User.findByPk(userId);
+            await eventPublisher.publishTicketAssigned(ticket, responsible);
+        } catch (error) {
+            console.error('Erro ao publicar evento de atribuição:', error);
+        }
+
         //--Retorna o ticket
         return {
             success: true,
@@ -463,6 +510,13 @@ class TicketServices{
     await ticket.reload({
       include: this.getDefaultIncludes(),
     });
+
+    // 🆕 PUBLICAR EVENTO
+    try {
+        await eventPublisher.publishTicketReturned(ticket);
+    } catch (error) {
+        console.error('Erro ao publicar evento de devolução:', error);
+        }
 
     //--Retorna o ticket
     return {
